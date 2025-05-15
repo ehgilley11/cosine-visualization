@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Article Embedding Visualization</title> <!-- TITLE REVERTED -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0; 
+            padding: 0; 
+            background-color: transparent; 
+        }
+        #vizWrapper { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            box-sizing: border-box;
+        }
+        h3 {
+            color: #000;
+            text-align: center; 
+            margin-bottom: 20px; 
+        }
+        #visualizationArea {
+            display: flex;
+            flex-direction: row; 
+            gap: 20px;
+            align-items: flex-start;
+            flex-wrap: wrap; 
+            justify-content: center; 
+            width: 100%; 
+        }
+        #svgContainer {
+            width: 100%; 
+            max-width: 500px; 
+            aspect-ratio: 1 / 1; 
+            border: 1px solid #ccc;
+            background-color: #222;
+            position: relative;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        svg { 
+            display: block; 
+            width: 100%;
+            height: 100%;
+        }
+        svg line {
+            transition: stroke-width 0.15s ease-out, stroke 0.15s ease-out, opacity 0.15s ease-out;
+        }
+        svg circle {
+            transition: r 0.15s ease-out, fill 0.15s ease-out;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+        svg text.topic-svg-label {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            font-weight: bold;
+            fill: #FFFFFF;
+            pointer-events: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .topic-line-0 { stroke: #FF6347; stroke-width: 3.5px; }
+        .topic-line-1 { stroke: #4682B4; stroke-width: 3.5px; }
+        .topic-line-2 { stroke: #32CD32; stroke-width: 3.5px; }
+
+        .article-vector-normal line { stroke: #A0B4CE; stroke-width: 1.5px; }
+        .article-vector-normal circle { fill: #A0B4CE; }
+        .article-vector-similar line { stroke: #80DD80; stroke-width: 1.5px; }
+        .article-vector-similar circle { fill: #80DD80; }
+        .article-vector-outlier line { stroke: #E0C700; stroke-width: 1.5px; }
+        .article-vector-outlier circle { fill: #E0C700; }
+
+        .highlighted-article-elements line { stroke-width: 3px !important; opacity: 1 !important; }
+        .highlighted-article-elements circle { r: 7px !important; opacity: 1 !important; }
+        .highlighted-topic-line { stroke-width: 4px !important; stroke: #FFFF00 !important; opacity: 1 !important; }
+
+        #infoPanel {
+            max-width: 280px; 
+            width: 100%; 
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-sizing: border-box; 
+        }
+        #infoPanel h4 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        #infoPanel p {
+            margin: 8px 0;
+            font-size: 0.9em;
+            color: #444;
+        }
+        #infoPanel .sim-value {
+            font-weight: bold;
+        }
+
+        @media (max-width: 839px) { 
+            #visualizationArea {
+                flex-direction: column;
+                align-items: center; 
+            }
+            #infoPanel {
+                max-width: 500px; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="vizWrapper">
+        <h3>Article Embedding Visualization</h3> <!-- TITLE REVERTED -->
+        <div id="visualizationArea">
+            <div id="svgContainer">
+                <svg id="vectorCanvas"> 
+                    <title>Article Embedding Visualization Plot</title> <!-- Adjusted SVG title slightly -->
+                    <desc>A plot showing article vectors and their similarity to topic clusters. Hover over points for details.</desc>
+                </svg>
+            </div>
+            <div id="infoPanel">
+                <h4>Information</h4>
+                <p id="infoName">Hover over an article vector end.</p>
+                <div id="infoSimilarities"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.getElementById('vectorCanvas');
+        const infoName = document.getElementById('infoName');
+        const infoSimilaritiesDiv = document.getElementById('infoSimilarities');
+
+        const LOGICAL_CANVAS_WIDTH = 500;
+        const LOGICAL_CANVAS_HEIGHT = 500;
+        const centerX = LOGICAL_CANVAS_WIDTH / 2;
+        const centerY = LOGICAL_CANVAS_HEIGHT / 2;
+
+        svg.setAttribute('viewBox', `0 0 ${LOGICAL_CANVAS_WIDTH} ${LOGICAL_CANVAS_HEIGHT}`);
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+        const topicData = [{"name": "Topic Cluster 1", "short_name": "Topic Cluster 1", "dx": 200.0, "dy": 0.0}, {"name": "Topic Cluster 2", "short_name": "Topic Cluster 2", "dx": -99.99999999999996, "dy": 173.20508075688775}, {"name": "Topic Cluster 3", "short_name": "Topic Cluster 3", "dx": -100.00000000000009, "dy": -173.20508075688767}];
+        const articleData = [{"name": "Article 0", "dx": 199.23893961834912, "dy": 17.431148549531635, "similarities": [0.9961946980917455, -0.4226182617406992, -0.5735764363510465], "color_class": "article-vector-normal"}, {"name": "Article 1", "dx": 198.05361374831406, "dy": 27.834620192013087, "similarities": [0.9902680687415704, -0.37460659341591185, -0.6156614753256587], "color_class": "article-vector-normal"}, {"name": "Article 2", "dx": 185.4367709133575, "dy": 74.9213186831824, "similarities": [0.9271838545667874, -0.13917310096006524, -0.7880107536067222], "color_class": "article-vector-normal"}, {"name": "Article 3", "dx": 173.20508075688775, "dy": 99.99999999999999, "similarities": [0.8660254037844387, 1.1102230246251565e-16, -0.8660254037844388], "color_class": "article-vector-normal"}, {"name": "Article 4", "dx": 150.9419160445544, "dy": 131.21180579810147, "similarities": [0.754709580222772, 0.19080899537654505, -0.945518575599317], "color_class": "article-vector-normal"}, {"name": "Article 5", "dx": 128.55752193730788, "dy": 153.20888862379562, "similarities": [0.6427876096865394, 0.3420201433256689, -0.9848077530122081], "color_class": "article-vector-normal"}, {"name": "Article 6", "dx": 100.00000000000003, "dy": 173.20508075688772, "similarities": [0.5000000000000001, 0.5, -1.0], "color_class": "article-vector-normal"}, {"name": "Article 7", "dx": 1.2246467991473532e-14, "dy": 200.0, "similarities": [6.123233995736766e-17, 0.8660254037844387, -0.8660254037844384], "color_class": "article-vector-normal"}, {"name": "Article 8", "dx": -173.20508075688775, "dy": 99.99999999999999, "similarities": [-0.8660254037844387, 0.8660254037844385, 6.106226635438361e-16], "color_class": "article-vector-normal"}, {"name": "Article 9", "dx": -173.20508075688772, "dy": -100.00000000000003, "similarities": [-0.8660254037844386, -3.3306690738754696e-16, 0.866025403784439], "color_class": "article-vector-normal"}, {"name": "Article 10", "dx": -34.729635533386066, "dy": -196.9615506024416, "similarities": [-0.17364817766693033, -0.7660444431189781, 0.9396926207859082], "color_class": "article-vector-normal"}, {"name": "Article 11", "dx": -17.43114854953165, "dy": -199.23893961834912, "similarities": [-0.08715574274765825, -0.8191520442889919, 0.9063077870366498], "color_class": "article-vector-normal"}, {"name": "Article 12", "dx": -3.4904812874566997, "dy": -199.96953903127826, "similarities": [-0.017452406437283498, -0.8571673007021124, 0.8746197071393955], "color_class": "article-vector-normal"}, {"name": "Article 13", "dx": -3.6739403974420595e-14, "dy": -200.0, "similarities": [-1.8369701987210297e-16, -0.8660254037844386, 0.8660254037844385], "color_class": "article-vector-normal"}, {"name": "Article 14", "dx": 173.20508075688767, "dy": -100.00000000000009, "similarities": [0.8660254037844384, -0.8660254037844388, 0.0], "color_class": "article-vector-normal"}, {"name": "Article 15", "dx": 181.26155740733, "dy": -84.52365234813985, "similarities": [0.90630778703665, -0.8191520442889915, -0.08715574274765892], "color_class": "article-vector-normal"}, {"name": "Article 16", "dx": 189.10371511986338, "dy": -65.11363089143134, "similarities": [0.9455185755993168, -0.7547095802227719, -0.19080899537654533], "color_class": "article-vector-normal"}, {"name": "Article 17", "dx": 196.9615506024416, "dy": -34.72963553338608, "similarities": [0.984807753012208, -0.6427876096865391, -0.3420201433256692], "color_class": "article-vector-normal"}];
+
+        topicData.forEach(tc => tc.elements = {}); 
+        articleData.forEach(article => article.elements = {});
+
+        const centerDot = document.createElementNS(svgNS, 'circle');
+        centerDot.setAttribute('cx', centerX);
+        centerDot.setAttribute('cy', centerY);
+        centerDot.setAttribute('r', 3);
+        centerDot.setAttribute('fill', '#ccc');
+        centerDot.style.cursor = 'default';
+        svg.appendChild(centerDot);
+
+        topicData.forEach((tc, i) => {
+            const line = document.createElementNS(svgNS, 'line');
+            const endX = centerX + tc.dx;
+            const endY = centerY + tc.dy;
+            line.setAttribute('x1', centerX);
+            line.setAttribute('y1', centerY);
+            line.setAttribute('x2', endX);
+            line.setAttribute('y2', endY);
+            line.setAttribute('class', `topic-line-${i}`);
+            svg.appendChild(line);
+            tc.elements.line = line;
+
+            const label = document.createElementNS(svgNS, 'text');
+            let labelMultiplier = 1.05;
+            // REVERTED to your original logic for labelMultiplier:
+            if (i === 0) { labelMultiplier = 0.75; } 
+            
+            let labelX = centerX + tc.dx * labelMultiplier;
+            let labelY = centerY + tc.dy * labelMultiplier;
+
+            // REVERTED to your original logic for text-anchor and labelY adjustment:
+            if (tc.dx < 0) label.setAttribute('text-anchor', 'end');
+            labelY += (tc.dy > 0 ? 5 : -2); 
+
+            label.setAttribute('x', labelX);
+            label.setAttribute('y', labelY);
+            label.classList.add('topic-svg-label');
+            label.textContent = tc.short_name;
+            svg.appendChild(label);
+            tc.elements.label = label;
+        });
+
+        articleData.forEach(article => {
+            const group = document.createElementNS(svgNS, 'g');
+            group.setAttribute('class', article.color_class);
+            svg.appendChild(group);
+            article.elements.group = group;
+
+            const line = document.createElementNS(svgNS, 'line');
+            const endX = centerX + article.dx;
+            const endY = centerY + article.dy;
+            line.setAttribute('x1', centerX);
+            line.setAttribute('y1', centerY);
+            line.setAttribute('x2', endX);
+            line.setAttribute('y2', endY);
+            group.appendChild(line);
+            article.elements.line = line;
+
+            const circle = document.createElementNS(svgNS, 'circle');
+            circle.setAttribute('cx', endX);
+            circle.setAttribute('cy', endY);
+            circle.setAttribute('r', 5);
+            group.appendChild(circle);
+            article.elements.circle = circle;
+
+            circle.addEventListener('mouseover', () => {
+                group.classList.add('highlighted-article-elements');
+                infoName.textContent = article.name;
+                let simHtml = "";
+                article.similarities.forEach((sim, idx) => {
+                    if (idx < topicData.length) {
+                         simHtml += `<p>${topicData[idx].short_name}: <span class="sim-value">${sim.toFixed(3)}</span></p>`;
+                    }
+                });
+                infoSimilaritiesDiv.innerHTML = simHtml;
+
+                let maxSimVal = -Infinity;
+                let mostSimilarTopicIdx = -1;
+                article.similarities.forEach((sim, idx) => {
+                    if (sim > maxSimVal) {
+                        maxSimVal = sim;
+                        mostSimilarTopicIdx = idx;
+                    }
+                });
+                // Safety checks remain as they don't alter visuals and prevent errors
+                if (mostSimilarTopicIdx !== -1 && topicData[mostSimilarTopicIdx] && topicData[mostSimilarTopicIdx].elements && topicData[mostSimilarTopicIdx].elements.line) { 
+                    topicData[mostSimilarTopicIdx].elements.line.classList.add('highlighted-topic-line');
+                }
+            });
+
+            circle.addEventListener('mouseout', () => {
+                group.classList.remove('highlighted-article-elements');
+                infoName.textContent = "Hover over an article vector end.";
+                infoSimilaritiesDiv.innerHTML = "";
+                topicData.forEach(tc => {
+                    // Safety checks remain
+                    if (tc && tc.elements && tc.elements.line) { 
+                        tc.elements.line.classList.remove('highlighted-topic-line');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
