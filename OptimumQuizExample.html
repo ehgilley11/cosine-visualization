@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Optimum Internet Plan Finder</title>
+    <style>
+        /* Basic Styles & Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* Quiz Container */
+        #quiz-container {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 700px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Header Styling */
+        .quiz-header {
+            background-color: #0033a0; /* Optimum Blue */
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .quiz-header h2 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        /* Progress Bar */
+        #progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 8px;
+            background: linear-gradient(90deg, #ff8c00, #ff6600);
+            transition: width 0.4s ease-in-out;
+        }
+
+        /* Quiz Body */
+        .quiz-body {
+            padding: 30px 40px;
+        }
+
+        /* Start Screen */
+        #start-screen {
+            text-align: center;
+        }
+        
+        #start-screen h3 {
+            font-size: 24px;
+            color: #333;
+            margin-top: 0;
+            font-weight: 700;
+        }
+
+        #start-screen p {
+            font-size: 17px;
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        /* Questions & Answers */
+        .question {
+            margin-bottom: 25px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .answers {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .answers li {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+        }
+
+        .answers li:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        
+        .answers li.selected {
+            background-color: #e6f0ff;
+            border-color: #0033a0;
+            font-weight: bold;
+        }
+        
+        .answers input {
+            margin-right: 15px;
+            width: 18px;
+            height: 18px;
+        }
+        
+        .answer-icon {
+            font-size: 20px;
+            margin-right: 12px;
+            width: 25px;
+            text-align: center;
+        }
+        
+        /* Slider Styling */
+        .slider-container {
+            margin-top: 20px;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        #slider-value {
+            font-weight: bold;
+            color: #0033a0;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #ff6600;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            background: #ff6600;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+
+        /* Buttons */
+        .quiz-footer {
+            padding: 20px 40px;
+            text-align: right;
+            border-top: 1px solid #e0e0e0;
+            background-color: #f9f9f9;
+        }
+
+        button {
+            background-color: #ff6600;
+            color: white;
+            padding: 14px 35px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        button:hover {
+            background-color: #e65c00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(255, 102, 0, 0.3);
+        }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Results Screen */
+        #results-screen {
+            text-align: center;
+        }
+        
+        #persona-name {
+            font-size: 20px;
+            color: #666;
+        }
+        #persona-name span {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0033a0;
+            display: block;
+            margin-top: 5px;
+        }
+        
+        .plan-recommendation {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        #plan-name {
+            font-size: 26px;
+            font-weight: bold;
+            color: #ff6600;
+            margin: 0;
+        }
+        
+        #plan-price {
+            font-size: 20px;
+            color: #333;
+            margin: 5px 0 15px 0;
+        }
+        
+        #recommendation-reason {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            text-align: left;
+        }
+        
+        /* Speed Simulator */
+        #speed-simulator {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 25px;
+        }
+        #speed-simulator h4 {
+            font-size: 18px;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .sim-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .sim-item:last-child {
+            border-bottom: none;
+        }
+        .sim-label {
+            font-size: 15px;
+        }
+        .sim-time {
+            font-weight: bold;
+            font-size: 16px;
+            color: #0033a0;
+        }
+        
+        /* Results CTAs */
+        .results-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .results-buttons a {
+            text-decoration: none;
+        }
+        button.secondary {
+            background-color: #e9ecef;
+            color: #343a40;
+            border: 1px solid #ced4da;
+        }
+        button.secondary:hover {
+            background-color: #dee2e6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Email Form */
+        #email-form {
+            margin-top: 30px;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        #email-form p {
+            margin-top: 0;
+            font-size: 15px;
+        }
+        .email-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        #email-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #email-submit-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        #email-confirmation {
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <div class="quiz-header">
+            <h2>Find Your Perfect Internet Speed</h2>
+        </div>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+        <div class="quiz-body">
+            <!-- Start Screen -->
+            <div id="start-screen">
+                <h3>Is Your Internet Keeping Up With You?</h3>
+                <p>Today's internet is about more than just browsing. Find out the exact speed your connected home actually needs in under 60 seconds.</p>
+            </div>
+
+            <!-- Quiz Questions -->
+            <div id="question-screen" class="hidden">
+                <div id="question-text" class="question"></div>
+                <ul id="answer-options" class="answers"></ul>
+            </div>
+            
+            <!-- Results Screen -->
+            <div id="results-screen" class="hidden">
+                <div id="persona-name">You're... <span></span></div>
+
+                <div class="plan-recommendation">
+                    <h3 id="plan-name"></h3>
+                    <div id="plan-price"></div>
+                    <p id="recommendation-reason"></p>
+                </div>
+
+                <div id="speed-simulator">
+                    <h4>Here's what your recommended speed feels like:</h4>
+                    <div class="sim-item">
+                        <span class="sim-label">🎬 Download a 4K Movie (50 GB)</span>
+                        <span class="sim-time" id="sim-movie"></span>
+                    </div>
+                    <div class="sim-item">
+                        <span class="sim-label">⬆️ Upload a 10-min 4K Video (5 GB)</span>
+                        <span class="sim-time" id="sim-upload"></span>
+                    </div>
+                    <div class="sim-item">
+                        <span class="sim-label">🎮 Download a New Game (100 GB)</span>
+                        <span class="sim-time" id="sim-game"></span>
+                    </div>
+                </div>
+                
+                <div class="results-buttons">
+                    <a href="https://www.optimum.com/check-availability" target="_blank">
+                        <button>Check Availability</button>
+                    </a>
+                    <a href="https://www.optimum.com/internet" target="_blank">
+                        <button class="secondary">Explore All Plans</button>
+                    </a>
+                </div>
+
+                <div id="email-form">
+                    <p>Want to save this recommendation? Enter your email and we'll send you a copy.</p>
+                    <div class="email-input-group">
+                        <input type="email" id="email-input" placeholder="your@email.com">
+                        <button id="email-submit-btn">Send Results</button>
+                    </div>
+                    <div id="email-confirmation" class="hidden">✅ Your results have been sent!</div>
+                </div>
+            </div>
+        </div>
+        <div class="quiz-footer">
+            <button id="action-btn">Start The Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizData = [
+                {
+                    question: "What's the most common internet frustration in your home?",
+                    type: "radio",
+                    key: "frustration",
+                    answers: [
+                        { text: "Choppy video calls or buffering streams", points: 2, icon: "💻" },
+                        { text: "Lag during online gaming", points: 3, icon: "🎮" },
+                        { text: "Slow uploads for work or social media", points: 4, icon: "⬆️" },
+                        { text: "Everything just feels a bit slow", points: 1, icon: "🤔" }
+                    ]
+                },
+                {
+                    question: "How many devices are connected at the same time?",
+                    type: "slider",
+                    key: "devices",
+                    min: 1,
+                    max: 25,
+                    pointsPerUnit: 0.2
+                },
+                {
+                    question: "Are you a content creator? (e.g., streaming, large file uploads)",
+                    type: "radio",
+                    key: "creator",
+                    answers: [
+                        { text: "Yes, I regularly upload or live stream", points: 5, icon: "🚀" },
+                        { text: "Occasionally for work or hobbies", points: 3, icon: "📁" },
+                        { text: "No, I mostly browse, watch, and download", points: 1, icon: "👀" }
+                    ]
+                },
+                {
+                    question: "How many people are using the internet daily?",
+                    type: "radio",
+                    key: "people",
+                    answers: [
+                        { text: "Just me", points: 1, icon: "👤" },
+                        { text: "2-3 people", points: 2, icon: "👥" },
+                        { text: "4 or more people", points: 4, icon: "👨‍👩‍👧‍👦" }
+                    ]
+                }
+            ];
+
+            // DOM Elements
+            const startScreen = document.getElementById('start-screen');
+            const questionScreen = document.getElementById('question-screen');
+            const resultsScreen = document.getElementById('results-screen');
+            const questionText = document.getElementById('question-text');
+            const answerOptions = document.getElementById('answer-options');
+            const actionBtn = document.getElementById('action-btn');
+            const progressBar = document.getElementById('progress-bar');
+            const emailForm = document.getElementById('email-form');
+            const emailSubmitBtn = document.getElementById('email-submit-btn');
+            const emailConfirmation = document.getElementById('email-confirmation');
+
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let userAnswers = {};
+
+            actionBtn.addEventListener('click', () => {
+                const state = actionBtn.textContent;
+                if (state === 'Start The Quiz') {
+                    startQuiz();
+                } else if (state === 'Next') {
+                    handleNextQuestion();
+                } else if (state === 'See My Result') {
+                    handleNextQuestion(); // Process final question
+                    showResults();
+                }
+            });
+            
+            emailSubmitBtn.addEventListener('click', () => {
+                const emailInput = document.getElementById('email-input');
+                if (emailInput.value && emailInput.value.includes('@')) {
+                    emailForm.innerHTML = `<div id="email-confirmation">✅ Your results have been sent!</div>`;
+                } else {
+                    alert("Please enter a valid email address.");
+                }
+            });
+
+            function startQuiz() {
+                startScreen.classList.add('hidden');
+                questionScreen.classList.remove('hidden');
+                actionBtn.textContent = 'Next';
+                actionBtn.disabled = true;
+                displayQuestion();
+            }
+
+            function displayQuestion() {
+                const currentQuestion = quizData[currentQuestionIndex];
+                questionText.textContent = currentQuestion.question;
+                answerOptions.innerHTML = '';
+                
+                if (currentQuestion.type === 'slider') {
+                    const li = document.createElement('li');
+                    li.style.border = 'none';
+                    li.style.cursor = 'default';
+                    li.style.padding = '10px 0';
+                    li.innerHTML = `
+                        <div style="width: 100%" class="slider-container">
+                            <div class="slider-label"><span>${currentQuestion.min} device</span><span id="slider-value">${currentQuestion.min}</span><span>${currentQuestion.max}+ devices</span></div>
+                            <input type="range" id="slider-input" min="${currentQuestion.min}" max="${currentQuestion.max}" value="${currentQuestion.min}">
+                        </div>
+                    `;
+                    answerOptions.appendChild(li);
+                    const slider = document.getElementById('slider-input');
+                    const sliderValue = document.getElementById('slider-value');
+                    slider.addEventListener('input', () => {
+                        sliderValue.textContent = slider.value;
+                        actionBtn.disabled = false;
+                    });
+                    actionBtn.disabled = false; // Slider has a default value
+                } else {
+                    currentQuestion.answers.forEach(answer => {
+                        const li = document.createElement('li');
+                        const input = document.createElement('input');
+                        input.type = currentQuestion.type;
+                        input.name = 'answer';
+                        input.value = answer.points;
+                        input.dataset.text = answer.text; // Store text for reasoning later
+
+                        li.innerHTML = `<span class="answer-icon">${answer.icon}</span>`;
+                        const label = document.createElement('label');
+                        label.style.width = '100%';
+                        label.style.cursor = 'pointer';
+                        label.appendChild(input);
+                        label.append(answer.text);
+                        
+                        li.appendChild(label);
+                        li.addEventListener('click', () => {
+                            const selected = answerOptions.querySelector('.selected');
+                            if (selected) selected.classList.remove('selected');
+                            input.checked = true;
+                            li.classList.add('selected');
+                            actionBtn.disabled = false;
+                        });
+                        answerOptions.appendChild(li);
+                    });
+                }
+                updateProgressBar();
+            }
+
+            function handleNextQuestion() {
+                const currentQuestion = quizData[currentQuestionIndex];
+                userAnswers[currentQuestion.key] = {};
+
+                if (currentQuestion.type === 'slider') {
+                    const slider = document.getElementById('slider-input');
+                    const value = parseInt(slider.value);
+                    score += value * currentQuestion.pointsPerUnit;
+                    userAnswers[currentQuestion.key].value = value;
+                } else {
+                    const selectedInput = answerOptions.querySelector('input:checked');
+                    score += parseInt(selectedInput.value);
+                    userAnswers[currentQuestion.key].text = selectedInput.dataset.text;
+                    userAnswers[currentQuestion.key].points = parseInt(selectedInput.value);
+                }
+
+                currentQuestionIndex++;
+                if (currentQuestionIndex < quizData.length) {
+                    displayQuestion();
+                    actionBtn.disabled = true;
+                    if (currentQuestionIndex === quizData.length - 1) {
+                        actionBtn.textContent = 'See My Result';
+                    }
+                } else {
+                    showResults();
+                }
+            }
+
+            function updateProgressBar() {
+                const progress = (currentQuestionIndex / quizData.length) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+
+            function getPersona() {
+                if (userAnswers.creator.points > 3) return "The Connected Creator";
+                if (userAnswers.frustration.points > 2) return "The Power Gamer";
+                if (userAnswers.people.points > 2 && userAnswers.devices.value > 10) return "The Modern Family";
+                if (score > 10) return "The Power User";
+                return "The Everyday Browser";
+            }
+
+            function generateReasoning(plan) {
+                let reason = `With a household of <strong>${userAnswers.people.text.toLowerCase()}</strong> and around <strong>${userAnswers.devices.value} devices</strong>, the ${plan.name} provides the bandwidth you need. `;
+                if (userAnswers.creator.points > 3) {
+                    reason += `Since you're a <strong>content creator</strong>, the ultra-fast upload speeds are essential for streaming and sharing large files without interruption.`;
+                } else if (userAnswers.frustration.text.includes('gaming')) {
+                    reason += `It's especially suited to eliminate frustrating <strong>gaming lag</strong> thanks to its high speed and low latency.`;
+                } else {
+                    reason += `This plan ensures everyone can stream, browse, and join video calls smoothly, addressing your concerns about <strong>${userAnswers.frustration.text.toLowerCase()}</strong>.`;
+                }
+                return reason;
+            }
+
+            function calculateSimTime(speedMbps, fileSizeGB) {
+                if (speedMbps === 0) return "N/A";
+                const timeSeconds = (fileSizeGB * 8192) / speedMbps; // 1 GB = 8192 Megabits
+                if (timeSeconds < 60) return `~${Math.ceil(timeSeconds)} seconds`;
+                const timeMinutes = timeSeconds / 60;
+                return `~${Math.round(timeMinutes)} minutes`;
+            }
+
+            function populateSimulator(speedMbps) {
+                document.getElementById('sim-movie').textContent = calculateSimTime(speedMbps, 50);
+                // For upload, we assume symmetrical fiber speeds for higher plans
+                const uploadSpeed = speedMbps >= 1000 ? speedMbps : speedMbps / 10; // Rough estimate for non-fiber
+                document.getElementById('sim-upload').textContent = calculateSimTime(uploadSpeed, 5);
+                document.getElementById('sim-game').textContent = calculateSimTime(speedMbps, 100);
+            }
+
+            function showResults() {
+                progressBar.style.width = `100%`;
+                questionScreen.classList.add('hidden');
+                resultsScreen.classList.remove('hidden');
+                actionBtn.parentElement.classList.add('hidden'); // Hide footer
+                
+                let plan;
+                if (score > 15) {
+                    plan = { name: "5 Gig Fiber Internet", price: "$120/mo", speed: 5000 };
+                } else if (score > 12) {
+                    plan = { name: "2 Gig Fiber Internet", price: "$90/mo", speed: 2000 };
+                } else if (score > 8) {
+                    plan = { name: "1 Gig Fiber Internet", price: "$70/mo", speed: 1000 };
+                } else if (score > 4) {
+                    plan = { name: "500 Mbps Internet", price: "$60/mo", speed: 500 };
+                } else {
+                    plan = { name: "300 Mbps Internet", price: "$40/mo", speed: 300 };
+                }
+
+                document.querySelector('#persona-name span').textContent = getPersona();
+                document.getElementById('plan-name').textContent = plan.name;
+                document.getElementById('plan-price').textContent = plan.price;
+                document.getElementById('recommendation-reason').innerHTML = generateReasoning(plan);
+                
+                populateSimulator(plan.speed);
+            }
+        });
+    </script>
+
+</body>
+</html>
